@@ -1,0 +1,22 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Node/Frontend
+node_modules/
+dist/
+build/
+.DS_Store
+
+# Hackathon specific
+mock_reddit_data.txt
+mock_ica_data.txt
