@@ -204,6 +204,11 @@ Frontend expects the backend API at `http://127.0.0.1:8000` and is currently bui
 - loading progress panel
 - readiness results dashboard
 
+Optional frontend environment file:
+```bash
+cp .env.example .env
+```
+
 ## Project Status
 Hackathon prototype in progress.
 

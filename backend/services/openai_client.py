@@ -42,10 +42,11 @@ class OpenAIAnalysisClient:
                 "missing_documents": ["string"],
                 "recommended_actions": ["string"],
                 "confidence_notes": ["string"],
-                "source_context": {
-                    "official_sources": ["object"],
-                    "community_sources": ["object"],
+                "data_sources_used": {
+                    "official_source": "string",
+                    "community_source": "string",
                 },
+                "error_note": None,
             },
         }
 

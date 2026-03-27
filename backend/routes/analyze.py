@@ -7,10 +7,24 @@ from pydantic import BaseModel, ConfigDict, Field
 
 try:
     from ..services.openai_client import OpenAIAnalysisClient
-    from ..services.tinyfish_client import TinyFishClient, TinyFishConfigError
+    from ..services.tinyfish_client import (
+        COMMUNITY_FORUM_URL,
+        OFFICIAL_ICA_URL,
+        TinyFishClient,
+        TinyFishConfigError,
+        get_default_community_urls,
+        get_default_official_urls,
+    )
 except ImportError:
     from services.openai_client import OpenAIAnalysisClient
-    from services.tinyfish_client import TinyFishClient, TinyFishConfigError
+    from services.tinyfish_client import (
+        COMMUNITY_FORUM_URL,
+        OFFICIAL_ICA_URL,
+        TinyFishClient,
+        TinyFishConfigError,
+        get_default_community_urls,
+        get_default_official_urls,
+    )
 
 
 router = APIRouter(prefix="/analyze", tags=["analysis"])
@@ -82,8 +96,8 @@ FALLBACK_RESPONSE = {
         "Fallback response used due to unavailable external services",
     ],
     "data_sources_used": {
-        "official_source": "ICA requirements page",
-        "community_source": "Public applicant discussion thread",
+        "official_source": OFFICIAL_ICA_URL,
+        "community_source": COMMUNITY_FORUM_URL,
     },
     "error_note": None,
 }
@@ -124,12 +138,12 @@ def build_fallback_response(
         "official_source": (
             official_context[0].get("title")
             if official_context and isinstance(official_context[0], dict)
-            else "ICA requirements page"
+            else OFFICIAL_ICA_URL
         ),
         "community_source": (
             community_context[0].get("title")
             if community_context and isinstance(community_context[0], dict)
-            else "Public applicant discussion thread"
+            else COMMUNITY_FORUM_URL
         ),
     }
     response["error_note"] = error_note
@@ -152,12 +166,12 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
         try:
             official_context = tinyfish_client.collect_context(
                 query="Singapore PR or citizenship official eligibility requirements",
-                urls=request.official_urls,
+                urls=request.official_urls or get_default_official_urls(),
                 source_type="official",
             )
             community_context = tinyfish_client.collect_context(
                 query="Singapore PR or citizenship applicant experiences approval rejection factors",
-                urls=request.community_urls,
+                urls=request.community_urls or get_default_community_urls(),
                 source_type="community",
             )
         except Exception as exc:
@@ -180,8 +194,8 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
         result.setdefault(
             "data_sources_used",
             {
-                "official_source": "ICA requirements page",
-                "community_source": "Public applicant discussion thread",
+                "official_source": OFFICIAL_ICA_URL,
+                "community_source": COMMUNITY_FORUM_URL,
             },
         )
         result.setdefault("error_note", None)
