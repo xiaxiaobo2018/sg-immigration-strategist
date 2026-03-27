@@ -1,0 +1,16 @@
+{
+  "age": 30,
+  "nationality": "Malaysian",
+  "years_in_singapore": 5,
+  "pass_type": "Employment Pass",
+  "profession": "Software Engineer",
+  "monthly_salary": 7000,
+  "education": "Bachelor's Degree",
+  "marital_status": "Single",
+  "spouse_status": null,
+  "children_count": 0,
+  "family_ties_in_singapore": false,
+  "prior_rejections": 0,
+  "language_ability": "English",
+  "notes": "Stable employment history in Singapore"
+}
