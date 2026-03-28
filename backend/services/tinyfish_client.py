@@ -17,8 +17,7 @@ COMMUNITY_FORUM_URL = (
     "how_long_does_it_take_to_get_pr_reasons_for/"
 )
 COMMUNITY_FORUM_URL_2 = (
-    "https://www.reddit.com/r/askSingapore/comments/16bdyf5/"
-    "singapore_pr_application/"
+    "https://forum.singaporeexpats.com/viewforum.php?f=78"
 )
 
 

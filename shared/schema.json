@@ -6,6 +6,7 @@
   "required": [
     "readiness_score",
     "eligibility_signal",
+    "scoring_breakdown",
     "official_takeaways",
     "community_takeaways",
     "top_strengths",
@@ -25,6 +26,107 @@
     "eligibility_signal": {
       "type": "string",
       "enum": ["low", "moderate", "strong"]
+    },
+    "scoring_breakdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubric_name",
+        "preliminary_score",
+        "final_score",
+        "score_adjustment",
+        "source_quality",
+        "band_guidance",
+        "dimensions"
+      ],
+      "properties": {
+        "rubric_name": { "type": "string" },
+        "preliminary_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "final_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "score_adjustment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["direction", "delta", "driver", "reason"],
+          "properties": {
+            "direction": {
+              "type": "string",
+              "enum": ["up", "down", "none"]
+            },
+            "delta": { "type": "integer" },
+            "driver": {
+              "type": "string",
+              "enum": ["official_evidence", "uncertainty", "none"]
+            },
+            "reason": { "type": "string" }
+          }
+        },
+        "source_quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["official", "community"],
+          "properties": {
+            "official": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["level", "label", "reason"],
+              "properties": {
+                "level": {
+                  "type": "string",
+                  "enum": ["strong", "mixed", "thin", "missing"]
+                },
+                "label": { "type": "string" },
+                "reason": { "type": "string" }
+              }
+            },
+            "community": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["level", "label", "reason"],
+              "properties": {
+                "level": {
+                  "type": "string",
+                  "enum": ["strong", "mixed", "thin", "missing"]
+                },
+                "label": { "type": "string" },
+                "reason": { "type": "string" }
+              }
+            }
+          }
+        },
+        "band_guidance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["low", "moderate", "strong"],
+          "properties": {
+            "low": { "type": "string" },
+            "moderate": { "type": "string" },
+            "strong": { "type": "string" }
+          }
+        },
+        "dimensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "label", "score", "max_score", "reason"],
+            "properties": {
+              "name": { "type": "string" },
+              "label": { "type": "string" },
+              "score": { "type": "integer" },
+              "max_score": { "type": "integer" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
     },
     "official_takeaways": {
       "type": "array",

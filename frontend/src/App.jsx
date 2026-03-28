@@ -81,6 +81,47 @@ function getBadgeClass(signal) {
   return "badge badge-moderate";
 }
 
+function formatDimensionScore(score, maxScore) {
+  return `${score}/${maxScore}`;
+}
+
+function formatScoreDelta(delta) {
+  if (delta > 0) {
+    return `+${delta}`;
+  }
+  return `${delta}`;
+}
+
+function getAdjustmentTone(direction) {
+  if (direction === "up") {
+    return "adjustment-pill adjustment-pill-up";
+  }
+  if (direction === "down") {
+    return "adjustment-pill adjustment-pill-down";
+  }
+  return "adjustment-pill adjustment-pill-flat";
+}
+
+function formatSourceQuality(level) {
+  if (!level) {
+    return "Unknown";
+  }
+  return level.replace(/^\w/, (value) => value.toUpperCase());
+}
+
+function getSourceQualityClass(level) {
+  if (level === "strong") {
+    return "source-badge source-badge-strong";
+  }
+  if (level === "mixed") {
+    return "source-badge source-badge-mixed";
+  }
+  if (level === "missing" || level === "thin") {
+    return "source-badge source-badge-thin";
+  }
+  return "source-badge";
+}
+
 function Field({ label, children }) {
   return (
     <label className="field">
@@ -451,6 +492,108 @@ function App() {
                   <div className="notice-card">
                     <p className="notice-title">Service Note</p>
                     <p>{result.error_note}</p>
+                  </div>
+                ) : null}
+
+                {result.scoring_breakdown ? (
+                  <div className="breakdown-card">
+                    <div className="breakdown-header">
+                      <div>
+                        <h3>Scoring Breakdown</h3>
+                        <p>
+                          Preliminary rubric score{" "}
+                          <strong>
+                            {result.scoring_breakdown.preliminary_score}
+                          </strong>
+                          . Final score{" "}
+                          <strong>{result.scoring_breakdown.final_score}</strong>.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="adjustment-card">
+                      <div className="adjustment-header">
+                        <span className="adjustment-title">Score Adjustment</span>
+                        <span
+                          className={getAdjustmentTone(
+                            result.scoring_breakdown.score_adjustment?.direction,
+                          )}
+                        >
+                          {formatScoreDelta(
+                            result.scoring_breakdown.score_adjustment?.delta ?? 0,
+                          )}
+                        </span>
+                      </div>
+                      <p className="adjustment-reason">
+                        {result.scoring_breakdown.score_adjustment?.reason}
+                      </p>
+                    </div>
+                    {result.scoring_breakdown.source_quality ? (
+                      <div className="source-quality-card">
+                        <div className="source-quality-header">
+                          <span className="adjustment-title">Source Quality</span>
+                        </div>
+                        <div className="source-quality-grid">
+                          {["official", "community"].map((key) => {
+                            const item = result.scoring_breakdown.source_quality?.[key];
+                            if (!item) {
+                              return null;
+                            }
+
+                            return (
+                              <div className="source-quality-item" key={key}>
+                                <div className="source-quality-topline">
+                                  <span className="source-quality-label">
+                                    {item.label}
+                                  </span>
+                                  <span className={getSourceQualityClass(item.level)}>
+                                    {formatSourceQuality(item.level)}
+                                  </span>
+                                </div>
+                                <p className="source-quality-reason">
+                                  {item.reason}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="breakdown-list">
+                      {result.scoring_breakdown.dimensions?.map((dimension) => {
+                        const width = Math.max(
+                          6,
+                          Math.min(
+                            100,
+                            (dimension.score / dimension.max_score) * 100,
+                          ),
+                        );
+
+                        return (
+                          <div className="breakdown-item" key={dimension.name}>
+                            <div className="breakdown-topline">
+                              <span className="breakdown-label">
+                                {dimension.label}
+                              </span>
+                              <span className="breakdown-score">
+                                {formatDimensionScore(
+                                  dimension.score,
+                                  dimension.max_score,
+                                )}
+                              </span>
+                            </div>
+                            <div
+                              className="breakdown-bar"
+                              aria-hidden="true"
+                            >
+                              <span style={{ width: `${width}%` }} />
+                            </div>
+                            <p className="breakdown-reason">
+                              {dimension.reason}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 ) : null}
 

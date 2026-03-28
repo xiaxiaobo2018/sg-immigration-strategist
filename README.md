@@ -32,6 +32,7 @@ Then it generates a structured PR readiness assessment that keeps those two evid
 The backend returns a dashboard-ready JSON object with:
 - `readiness_score`
 - `eligibility_signal`
+- `scoring_breakdown`
 - `official_takeaways`
 - `community_takeaways`
 - `top_strengths`
@@ -43,6 +44,11 @@ The backend returns a dashboard-ready JSON object with:
 - `error_note`
 
 ## Architecture
+
+### Scoring Principles
+- The system does not use race, religion, or ethnicity as scoring variables.
+- Readiness is estimated from profile stability, documentation readiness, and official-source-aligned signals.
+- Community case patterns may inform qualitative risk notes, but they are not treated as hidden rules or deterministic scoring logic.
 
 ### Frontend
 - React single-page experience
@@ -105,6 +111,50 @@ Response body:
 {
   "readiness_score": 78,
   "eligibility_signal": "moderate",
+  "scoring_breakdown": {
+    "rubric_name": "singapore_pr_readiness_v1",
+    "preliminary_score": 76,
+    "final_score": 78,
+    "score_adjustment": {
+      "direction": "up",
+      "delta": 2,
+      "driver": "official_evidence",
+      "reason": "Official-source evidence modestly strengthened the rubric baseline."
+    },
+    "source_quality": {
+      "official": {
+        "level": "strong",
+        "label": "Official Support",
+        "reason": "Official documentation expectations were well supported by retrieved ICA guidance."
+      },
+      "community": {
+        "level": "mixed",
+        "label": "Community Signals",
+        "reason": "Some community case patterns were available, but coverage was uneven."
+      }
+    },
+    "band_guidance": {
+      "low": "0-49: early, weak, or highly incomplete PR profile",
+      "moderate": "50-74: plausible PR profile with meaningful gaps or uncertainty",
+      "strong": "75-100: well-developed PR profile with multiple positive signals"
+    },
+    "dimensions": [
+      {
+        "name": "residency_stability",
+        "label": "Residency Stability",
+        "score": 21,
+        "max_score": 25,
+        "reason": "Solid residency duration for a PR profile."
+      },
+      {
+        "name": "employment_foundation",
+        "label": "Employment Foundation",
+        "score": 20,
+        "max_score": 28,
+        "reason": "Employment footing and salary profile are supportive."
+      }
+    ]
+  },
   "official_takeaways": [
     "Official ICA guidance frames PR as a holistic assessment supported by complete documents.",
     "Employment and residency stability appear important to present clearly."
@@ -150,19 +200,30 @@ If TinyFish fails, the API still continues without retrieval context. If OpenAI 
 
 ```bash
 cd backend
+cp .env.example .env
 pip install -r requirements.txt
-uvicorn app:app --reload
+python3.11 -m uvicorn app:app --reload
 ```
+
+`backend/.env` should contain real local keys and must not be committed.
 
 ### Frontend
 
 ```bash
 cd frontend
+cp .env.example .env
 npm install
 npm run dev
 ```
 
 The frontend targets `http://127.0.0.1:8000` by default.
+
+## Secrets
+
+- Commit `.env.example`, not real `.env` files.
+- Keep real secrets only in local environment files such as `backend/.env`.
+- For deployment, use platform-managed environment variable settings instead of committing secrets.
+- If a real key was ever committed, remove it and rotate it immediately.
 
 ## Current Status
 

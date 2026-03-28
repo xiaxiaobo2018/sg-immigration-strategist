@@ -14,6 +14,8 @@ When we click analyze, the backend reviews two evidence streams. First, it retri
 
 The key design choice is separation. Official guidance stays authoritative. Community content is treated as anecdotal signal only, never as policy.
 
+We also make the scoring boundary explicit: the system does not use race, religion, or ethnicity as scoring variables. Readiness is estimated from profile stability, documentation readiness, and signals that stay aligned with official sources.
+
 The output is a structured PR readiness dashboard: a readiness score, an eligibility signal, official takeaways, community pattern signals, top strengths, top risks, likely missing documents, and recommended next steps.
 
 So instead of dumping scattered information on the user, we turn it into a practical strategy snapshot they can actually act on.

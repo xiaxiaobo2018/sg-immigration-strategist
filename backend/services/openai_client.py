@@ -25,18 +25,59 @@ class OpenAIAnalysisClient:
     def analyze_profile(
         self,
         applicant_profile: dict[str, Any],
+        scoring_rubric: dict[str, Any] | None = None,
+        score_adjustment_guidance: dict[str, str] | None = None,
         official_context: list[dict[str, Any]] | None = None,
         community_context: list[dict[str, Any]] | None = None,
         extra_notes: str | None = None,
     ) -> dict[str, Any]:
         payload = {
             "applicant_profile": applicant_profile,
+            "scoring_rubric": scoring_rubric or {},
+            "score_adjustment_guidance": score_adjustment_guidance or {},
             "official_context": official_context or [],
             "community_context": community_context or [],
             "extra_notes": extra_notes,
             "required_output_schema": {
                 "readiness_score": "integer from 0 to 100",
                 "eligibility_signal": "low | moderate | strong",
+                "scoring_breakdown": {
+                    "rubric_name": "string",
+                    "preliminary_score": "integer from 0 to 100",
+                    "final_score": "integer from 0 to 100",
+                    "score_adjustment": {
+                        "direction": "up | down | none",
+                        "delta": "integer",
+                        "driver": "official_evidence | uncertainty | none",
+                        "reason": "string",
+                    },
+                    "source_quality": {
+                        "official": {
+                            "level": "strong | mixed | thin | missing",
+                            "label": "string",
+                            "reason": "string",
+                        },
+                        "community": {
+                            "level": "strong | mixed | thin | missing",
+                            "label": "string",
+                            "reason": "string",
+                        },
+                    },
+                    "band_guidance": {
+                        "low": "string",
+                        "moderate": "string",
+                        "strong": "string",
+                    },
+                    "dimensions": [
+                        {
+                            "name": "string",
+                            "label": "string",
+                            "score": "integer",
+                            "max_score": "integer",
+                            "reason": "string",
+                        }
+                    ],
+                },
                 "official_takeaways": ["string"],
                 "community_takeaways": ["string"],
                 "top_strengths": ["string"],
@@ -60,8 +101,13 @@ class OpenAIAnalysisClient:
                 {
                     "role": "user",
                     "content": (
-                        "Analyze the following Singapore immigration profile and "
-                        "return valid JSON only.\n\n"
+                        "Analyze the following Singapore PR profile using the "
+                        "provided PR-specific scoring rubric as your anchor. "
+                        "Use the score_adjustment_guidance to make the adjustment "
+                        "reason concrete when the score moves or stays flat. "
+                        "You may adjust modestly for strong official evidence or "
+                        "major uncertainty, but keep the score aligned with the rubric. "
+                        "Return valid JSON only.\n\n"
                         f"{json.dumps(payload, indent=2)}"
                     ),
                 },
@@ -73,6 +119,34 @@ class OpenAIAnalysisClient:
             raise ValueError("OpenAI returned an empty response.")
 
         result = json.loads(content)
+        result.setdefault(
+            "scoring_breakdown",
+            {
+                "rubric_name": scoring_rubric.get(
+                    "rubric_name",
+                    "singapore_pr_readiness_v1",
+                ),
+                "preliminary_score": scoring_rubric.get(
+                    "preliminary_score",
+                    result.get("readiness_score", 0),
+                ),
+                "final_score": result.get("readiness_score", 0),
+                "score_adjustment": {
+                    "direction": "none",
+                    "delta": 0,
+                    "driver": "none",
+                    "reason": (
+                        (score_adjustment_guidance or {}).get(
+                            "flat_reason",
+                            "Final score stayed aligned with the rubric baseline.",
+                        )
+                    ),
+                },
+                "source_quality": {},
+                "band_guidance": scoring_rubric.get("band_guidance", {}),
+                "dimensions": scoring_rubric.get("dimensions", []),
+            },
+        )
         result.setdefault(
             "data_sources_used",
             {
