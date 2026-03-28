@@ -1,35 +1,41 @@
 # SG Immigration Strategist
 
-An AI agent that assesses Singapore Permanent Residence readiness using official ICA guidance and real community case patterns.
+An AI agent that assesses Singapore PR readiness using official ICA guidance and real community case patterns.
 
-## Product Focus
+## Tech Stack
 
-This project is now intentionally centered on one job:
-- evaluate how ready an applicant looks for a Singapore PR application
-- separate official ICA guidance from anecdotal community signals
-- return a practical readiness snapshot with risks, strengths, documents, and next steps
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=0b0f10)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=ffffff)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=ffffff)
+![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=ffffff)
+![TinyFish](https://img.shields.io/badge/TinyFish-FF8A00?style=for-the-badge&logoColor=ffffff&label=TinyFish)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=ffffff)
 
-It does not try to predict guaranteed approval, and it does not position community anecdotes as policy.
+## What It Does
 
-## Problem
+- Collects an applicant profile for Singapore PR readiness review
+- Retrieves official ICA guidance and community case patterns separately
+- Produces a structured readiness score, strengths, risks, missing documents, and next steps
+- Keeps official guidance authoritative and community signals anecdotal
 
-Singapore PR decisions can feel opaque. Applicants can usually find:
-- official ICA process information and application guidance
-- scattered Reddit and forum discussions about real cases
+## Scoring Principles
 
-What they usually cannot find is a clean way to combine both without blurring the line between policy and anecdote.
+- The system does not use race, religion, or ethnicity as scoring variables.
+- Readiness is estimated from profile stability, documentation readiness, and official-source-aligned signals.
+- Community case patterns may inform qualitative risk notes, but they are not treated as hidden rules or deterministic scoring logic.
 
-## Solution
+## Architecture
 
-SG Immigration Strategist collects an applicant profile, retrieves:
-- official PR guidance from ICA-related sources
-- community-reported applicant case patterns
-
-Then it generates a structured PR readiness assessment that keeps those two evidence streams visibly separate.
+1. The frontend collects a PR applicant profile.
+2. TinyFish retrieves official and community source context.
+3. The backend builds a PR-specific scoring rubric.
+4. OpenAI synthesizes the evidence into a structured readiness assessment.
+5. If live services fail, the app returns a stable fallback response in the same JSON shape.
 
 ## Core Output
 
-The backend returns a dashboard-ready JSON object with:
+The API returns:
+
 - `readiness_score`
 - `eligibility_signal`
 - `scoring_breakdown`
@@ -43,31 +49,52 @@ The backend returns a dashboard-ready JSON object with:
 - `data_sources_used`
 - `error_note`
 
-## Architecture
+## Quick Start
 
-### Scoring Principles
-- The system does not use race, religion, or ethnicity as scoring variables.
-- Readiness is estimated from profile stability, documentation readiness, and official-source-aligned signals.
-- Community case patterns may inform qualitative risk notes, but they are not treated as hidden rules or deterministic scoring logic.
+### 1. Install tools
 
-### Frontend
-- React single-page experience
-- Applicant intake form
-- Live agent progress panel
-- PR readiness dashboard
+```bash
+python3.11 --version
+node --version
+npm --version
+```
 
-### Backend
-- FastAPI API
-- TinyFish retrieval for official and community source context
-- OpenAI analysis step with a strict JSON response contract
-- Stable fallback response if retrieval or model calls fail
+If needed:
 
-## How It Works
+```bash
+brew install python@3.11 node
+```
 
-1. The user submits a PR applicant profile.
-2. The backend retrieves official ICA guidance and community discussion context.
-3. The LLM evaluates readiness while keeping official and anecdotal evidence separate.
-4. The frontend renders a strategy snapshot the user can act on.
+### 2. Start the backend
+
+```bash
+cd backend
+cp .env.example .env
+python3.11 -m pip install -r requirements.txt
+python3.11 -m uvicorn app:app --reload
+```
+
+Put your real keys in `backend/.env`:
+
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+TINYFISH_API_KEY=your_tinyfish_api_key_here
+OPENAI_MODEL=gpt-5
+TINYFISH_BASE_URL=
+```
+
+`TINYFISH_BASE_URL` is optional for the current SDK-based TinyFish flow.
+
+### 3. Start the frontend
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+The frontend targets `http://127.0.0.1:8000` by default.
 
 ## API
 
@@ -82,7 +109,7 @@ The backend returns a dashboard-ready JSON object with:
 
 ### `POST /analyze`
 
-Request body:
+Example request:
 
 ```json
 {
@@ -99,220 +126,47 @@ Request body:
   "family_ties_in_singapore": false,
   "prior_rejections": 0,
   "language_ability": "English",
-  "notes": "Stable employment history in Singapore",
-  "official_urls": [],
-  "community_urls": []
+  "notes": "Stable employment history in Singapore"
 }
 ```
 
-Response body:
+Example response:
 
 ```json
 {
   "readiness_score": 78,
   "eligibility_signal": "moderate",
-  "scoring_breakdown": {
-    "rubric_name": "singapore_pr_readiness_v1",
-    "preliminary_score": 76,
-    "final_score": 78,
-    "score_adjustment": {
-      "direction": "up",
-      "delta": 2,
-      "driver": "official_evidence",
-      "reason": "Official-source evidence modestly strengthened the rubric baseline."
-    },
-    "source_quality": {
-      "official": {
-        "level": "strong",
-        "label": "Official Support",
-        "reason": "Official documentation expectations were well supported by retrieved ICA guidance."
-      },
-      "community": {
-        "level": "mixed",
-        "label": "Community Signals",
-        "reason": "Some community case patterns were available, but coverage was uneven."
-      }
-    },
-    "band_guidance": {
-      "low": "0-49: early, weak, or highly incomplete PR profile",
-      "moderate": "50-74: plausible PR profile with meaningful gaps or uncertainty",
-      "strong": "75-100: well-developed PR profile with multiple positive signals"
-    },
-    "dimensions": [
-      {
-        "name": "residency_stability",
-        "label": "Residency Stability",
-        "score": 21,
-        "max_score": 25,
-        "reason": "Solid residency duration for a PR profile."
-      },
-      {
-        "name": "employment_foundation",
-        "label": "Employment Foundation",
-        "score": 20,
-        "max_score": 28,
-        "reason": "Employment footing and salary profile are supportive."
-      }
-    ]
-  },
   "official_takeaways": [
-    "Official ICA guidance frames PR as a holistic assessment supported by complete documents.",
-    "Employment and residency stability appear important to present clearly."
+    "Official ICA guidance frames PR as a holistic assessment supported by complete documents."
   ],
   "community_takeaways": [
-    "Community cases often treat salary stability and time in Singapore as soft signals.",
-    "Forum discussions remain anecdotal and do not reveal formal approval rules."
+    "Community cases often treat salary stability and time in Singapore as soft signals."
   ],
   "top_strengths": [
-    "Stable employment history in Singapore",
-    "Professional profile with competitive salary"
+    "Stable employment history in Singapore"
   ],
   "top_risks": [
-    "Limited family ties in Singapore",
     "Holistic PR criteria remain partially opaque"
   ],
-  "missing_documents": [
-    "Latest payslips",
-    "Employer letter",
-    "Educational certificates"
-  ],
   "recommended_actions": [
-    "Prepare a complete employment and education evidence pack",
-    "Strengthen the application narrative around long-term Singapore ties"
+    "Prepare a complete employment and education evidence pack"
   ],
-  "confidence_notes": [
-    "Official guidance is stronger than anecdotal evidence for document expectations.",
-    "Community patterns should be treated as directional only."
-  ],
-  "data_sources_used": {
-    "official_source": "ICA PR guidance",
-    "community_source": "Reddit PR discussion threads"
-  },
   "error_note": null
 }
-```
-
-If TinyFish fails, the API still continues without retrieval context. If OpenAI fails, the backend returns the same response shape with a fallback payload and an `error_note`.
-
-## Install Guide
-
-### Prerequisites
-
-Install the core tools first:
-
-```bash
-python3.11 --version
-node --version
-npm --version
-```
-
-If you do not already have them:
-
-```bash
-brew install python@3.11 node
-```
-
-### Backend Packages
-
-Create local backend config and install the Python packages used by FastAPI, OpenAI, and TinyFish integration:
-
-```bash
-cd backend
-cp .env.example .env
-python3.11 -m pip install -r requirements.txt
-```
-
-This installs:
-- `fastapi`
-- `uvicorn`
-- `pydantic`
-- `openai`
-- `httpx`
-- `python-dotenv`
-
-### Backend Environment
-
-Put your real local keys in `backend/.env`:
-
-```bash
-OPENAI_API_KEY=your_real_key
-TINYFISH_API_KEY=your_real_key
-OPENAI_MODEL=gpt-5
-TINYFISH_BASE_URL=https://api.tinyfish.ai
-```
-
-### Run Backend
-
-Start the API server:
-
-```bash
-cd backend
-python3.11 -m uvicorn app:app --reload
-```
-
-### Frontend Packages
-
-Install the frontend packages used by React and Vite:
-
-```bash
-cd frontend
-cp .env.example .env
-npm install
-```
-
-This installs:
-- `react`
-- `react-dom`
-- `vite`
-- `@vitejs/plugin-react`
-
-### Run Frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
-The frontend targets `http://127.0.0.1:8000` by default.
-
-## Local Setup
-
-### Backend
-
-```bash
-cd backend
-cp .env.example .env
-python3.11 -m uvicorn app:app --reload
-```
-
-`backend/.env` should contain real local keys and must not be committed.
-
-### Frontend
-
-```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev
 ```
 
 ## Secrets
 
 - Commit `.env.example`, not real `.env` files.
 - Keep real secrets only in local environment files such as `backend/.env`.
-- For deployment, use platform-managed environment variable settings instead of committing secrets.
-- If a real key was ever committed, remove it and rotate it immediately.
+- If a real key was ever committed, rotate it immediately.
 
-## Current Status
+## Current State
 
-Hackathon prototype with the product story now aligned around:
-- Singapore PR readiness
-- official ICA guidance as the authoritative source
-- community case patterns as anecdotal support only
+Hackathon-ready prototype with:
 
-## Next Improvements
-
-- Add richer source normalization and citations
-- Support multiple official ICA PR pages and better source labeling
-- Improve structured explanation quality for mixed or incomplete profiles
-- Add historical case clustering instead of relying on raw community threads
+- React frontend intake and readiness dashboard
+- FastAPI backend scoring pipeline
+- TinyFish live retrieval and browser preview
+- OpenAI synthesis layer
+- Stable fallback mode when live services fail
