@@ -8,8 +8,6 @@ from pydantic import BaseModel, ConfigDict, Field
 try:
     from ..services.openai_client import OpenAIAnalysisClient
     from ..services.tinyfish_client import (
-        COMMUNITY_FORUM_URL,
-        OFFICIAL_ICA_URL,
         TinyFishClient,
         TinyFishConfigError,
         get_default_community_urls,
@@ -18,8 +16,6 @@ try:
 except ImportError:
     from services.openai_client import OpenAIAnalysisClient
     from services.tinyfish_client import (
-        COMMUNITY_FORUM_URL,
-        OFFICIAL_ICA_URL,
         TinyFishClient,
         TinyFishConfigError,
         get_default_community_urls,
@@ -66,6 +62,8 @@ class AnalyzeResponse(BaseModel):
 
     readiness_score: int
     eligibility_signal: str
+    official_takeaways: list[str]
+    community_takeaways: list[str]
     top_strengths: list[str]
     top_risks: list[str]
     missing_documents: list[str]
@@ -78,6 +76,14 @@ class AnalyzeResponse(BaseModel):
 FALLBACK_RESPONSE = {
     "readiness_score": 72,
     "eligibility_signal": "moderate",
+    "official_takeaways": [
+        "ICA PR assessment considers the full profile and supporting documents.",
+        "A complete application package helps reduce avoidable review friction.",
+    ],
+    "community_takeaways": [
+        "Applicants often discuss salary stability and time in Singapore as soft signals.",
+        "Community cases are anecdotal and should not be treated as approval rules.",
+    ],
     "top_strengths": [
         "Stable work history",
         "Relevant professional background",
@@ -96,11 +102,20 @@ FALLBACK_RESPONSE = {
         "Fallback response used due to unavailable external services",
     ],
     "data_sources_used": {
-        "official_source": OFFICIAL_ICA_URL,
-        "community_source": COMMUNITY_FORUM_URL,
+        "official_source": "ICA PR guidance",
+        "community_source": "Reddit PR discussion thread",
     },
     "error_note": None,
 }
+
+
+def get_source_label(
+    context: list[dict[str, Any]],
+    fallback_label: str,
+) -> str:
+    if context and isinstance(context[0], dict):
+        return context[0].get("title") or context[0].get("url") or fallback_label
+    return fallback_label
 
 
 def build_applicant_profile(request: AnalyzeRequest) -> dict[str, Any]:
@@ -119,6 +134,7 @@ def build_applicant_profile(request: AnalyzeRequest) -> dict[str, Any]:
         "prior_rejections": request.prior_rejections,
         "language_ability": request.language_ability,
         "notes": request.notes,
+        "extra_notes": request.extra_notes,
     }
 
 
@@ -135,15 +151,10 @@ def build_fallback_response(
         )
     response["confidence_notes"] = confidence_notes
     response["data_sources_used"] = {
-        "official_source": (
-            official_context[0].get("title")
-            if official_context and isinstance(official_context[0], dict)
-            else OFFICIAL_ICA_URL
-        ),
-        "community_source": (
-            community_context[0].get("title")
-            if community_context and isinstance(community_context[0], dict)
-            else COMMUNITY_FORUM_URL
+        "official_source": get_source_label(official_context, "ICA PR guidance"),
+        "community_source": get_source_label(
+            community_context,
+            "Reddit PR discussion thread",
         ),
     }
     response["error_note"] = error_note
@@ -165,12 +176,12 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
     if tinyfish_client:
         try:
             official_context = tinyfish_client.collect_context(
-                query="Singapore PR or citizenship official eligibility requirements",
+                query="Singapore PR official guidance, requirements, and supporting documents",
                 urls=request.official_urls or get_default_official_urls(),
                 source_type="official",
             )
             community_context = tinyfish_client.collect_context(
-                query="Singapore PR or citizenship applicant experiences approval rejection factors",
+                query="Singapore PR applicant experiences, approval patterns, and rejection concerns",
                 urls=request.community_urls or get_default_community_urls(),
                 source_type="community",
             )
@@ -185,7 +196,7 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
             applicant_profile=build_applicant_profile(request),
             official_context=official_context,
             community_context=community_context,
-            extra_notes=request.notes,
+            extra_notes=request.extra_notes or request.notes,
         )
         if retrieval_issue:
             result["confidence_notes"] = list(result.get("confidence_notes", [])) + [
@@ -194,8 +205,8 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
         result.setdefault(
             "data_sources_used",
             {
-                "official_source": OFFICIAL_ICA_URL,
-                "community_source": COMMUNITY_FORUM_URL,
+                "official_source": "ICA PR guidance",
+                "community_source": "Reddit PR discussion thread",
             },
         )
         result.setdefault("error_note", None)

@@ -15,7 +15,7 @@ except ImportError:
 app = FastAPI(
     title="SG Immigration Strategist API",
     version="0.1.0",
-    description="Backend API for Singapore PR and citizenship readiness analysis.",
+    description="Backend API for Singapore Permanent Residence readiness analysis.",
 )
 
 app.add_middleware(

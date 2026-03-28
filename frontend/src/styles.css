@@ -441,6 +441,10 @@ button {
   margin: 8px 0 0;
 }
 
+.sources-note {
+  color: var(--muted);
+}
+
 @keyframes orbit {
   from {
     transform: rotate(0deg);

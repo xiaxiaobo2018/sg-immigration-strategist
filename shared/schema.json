@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SG Immigration Strategist Analyze Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "readiness_score",
+    "eligibility_signal",
+    "official_takeaways",
+    "community_takeaways",
+    "top_strengths",
+    "top_risks",
+    "missing_documents",
+    "recommended_actions",
+    "confidence_notes",
+    "data_sources_used",
+    "error_note"
+  ],
+  "properties": {
+    "readiness_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "eligibility_signal": {
+      "type": "string",
+      "enum": ["low", "moderate", "strong"]
+    },
+    "official_takeaways": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "community_takeaways": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "top_strengths": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "top_risks": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "missing_documents": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "recommended_actions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "confidence_notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "data_sources_used": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["official_source", "community_source"],
+      "properties": {
+        "official_source": { "type": "string" },
+        "community_source": { "type": "string" }
+      }
+    },
+    "error_note": {
+      "type": ["string", "null"]
+    }
+  }
+}

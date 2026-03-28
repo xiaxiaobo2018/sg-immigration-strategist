@@ -1,134 +1,72 @@
 # SG Immigration Strategist
 
-An AI agent that helps assess Singapore PR/Citizenship application readiness by combining official ICA requirements with community case patterns.
+An AI agent that assesses Singapore Permanent Residence readiness using official ICA guidance and real community case patterns.
+
+## Product Focus
+
+This project is now intentionally centered on one job:
+- evaluate how ready an applicant looks for a Singapore PR application
+- separate official ICA guidance from anecdotal community signals
+- return a practical readiness snapshot with risks, strengths, documents, and next steps
+
+It does not try to predict guaranteed approval, and it does not position community anecdotes as policy.
 
 ## Problem
-Applying for Singapore PR or citizenship can feel confusing and opaque. Applicants often struggle to understand:
-- whether their profile looks competitive
-- which documents they may be missing
-- what factors may weaken their application
-- how official requirements compare with real-world applicant experiences
+
+Singapore PR decisions can feel opaque. Applicants can usually find:
+- official ICA process information and application guidance
+- scattered Reddit and forum discussions about real cases
+
+What they usually cannot find is a clean way to combine both without blurring the line between policy and anecdote.
 
 ## Solution
-SG Immigration Strategist is a lightweight AI agent that:
-1. collects an applicant profile
-2. extracts official requirement information from ICA sources
-3. analyzes community-reported approval/rejection patterns
-4. generates a readiness assessment with risks, strengths, and next steps
 
-## Key Features
-- Applicant profile intake form
-- AI-generated readiness score
-- Missing document checklist
-- Risk factor analysis
-- Suggested next steps
-- Clear separation between official information and community-derived signals
+SG Immigration Strategist collects an applicant profile, retrieves:
+- official PR guidance from ICA-related sources
+- community-reported applicant case patterns
+
+Then it generates a structured PR readiness assessment that keeps those two evidence streams visibly separate.
+
+## Core Output
+
+The backend returns a dashboard-ready JSON object with:
+- `readiness_score`
+- `eligibility_signal`
+- `official_takeaways`
+- `community_takeaways`
+- `top_strengths`
+- `top_risks`
+- `missing_documents`
+- `recommended_actions`
+- `confidence_notes`
+- `data_sources_used`
+- `error_note`
+
+## Architecture
+
+### Frontend
+- React single-page experience
+- Applicant intake form
+- Live agent progress panel
+- PR readiness dashboard
+
+### Backend
+- FastAPI API
+- TinyFish retrieval for official and community source context
+- OpenAI analysis step with a strict JSON response contract
+- Stable fallback response if retrieval or model calls fail
 
 ## How It Works
 
-### 1. User Input
-The user enters profile details such as:
-- age
-- nationality
-- years in Singapore
-- pass type
-- profession
-- salary
-- education
-- family status
+1. The user submits a PR applicant profile.
+2. The backend retrieves official ICA guidance and community discussion context.
+3. The LLM evaluates readiness while keeping official and anecdotal evidence separate.
+4. The frontend renders a strategy snapshot the user can act on.
 
-### 2. Data Collection
-The agent gathers:
-- **Official data** from ICA-related sources
-- **Community data** from public discussion threads and applicant case reports
+## API
 
-### 3. AI Analysis
-An LLM compares:
-- the user’s submitted profile
-- official application requirements
-- patterns from community cases
+### `GET /health`
 
-### 4. Output
-The system returns a structured assessment, including:
-- readiness score
-- eligibility signal
-- top strengths
-- top risks
-- missing documents
-- recommended actions
-- confidence notes
-
-## Tech Stack
-
-### Application Stack
-- **Frontend:** React
-- **Backend:** FastAPI
-- **AI:** OpenAI API
-- **Web extraction / browsing:** TinyFish
-
-### Development Tools
-- **OpenAI ChatGPT / Codex** — used to accelerate system design, prompt engineering, debugging, and implementation during the hackathon.
-- **Git & GitHub** — version control and submission
-- **VS Code** — development environment
-- **Node.js / npm** — frontend package management and local dev server
-- **Python virtual environment** — backend dependency isolation
-
-## Built With
-- React
-- FastAPI
-- OpenAI
-- TinyFish
-- GitHub
-
-## Demo Flow
-1. User fills in applicant profile
-2. App shows multi-step agent progress
-3. Backend retrieves official + community source content
-4. LLM generates readiness analysis
-5. Dashboard displays structured results
-
-## Example Output
-```json
-{
-  "readiness_score": 78,
-  "eligibility_signal": "moderate",
-  "top_strengths": [
-    "Stable employment history in Singapore",
-    "Above-average salary profile"
-  ],
-  "top_risks": [
-    "Limited years of residency",
-    "No strong family ties in Singapore"
-  ],
-  "missing_documents": [
-    "Latest payslips",
-    "Employer letter",
-    "Educational certificates"
-  ],
-  "recommended_actions": [
-    "Strengthen application with longer employment history",
-    "Prepare complete supporting documents"
-  ],
-  "confidence_notes": [
-    "Official requirements are clearer than real-world approval criteria",
-    "Community data is anecdotal and should not be treated as guaranteed outcome"
-  ]
-}
-```
-
-## Setup
-
-### Backend
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn app:app --reload
-```
-
-### Backend API Contract
-`GET /health`
-
-Returns:
 ```json
 {
   "status": "ok",
@@ -136,9 +74,10 @@ Returns:
 }
 ```
 
-`POST /analyze`
+### `POST /analyze`
 
 Request body:
+
 ```json
 {
   "age": 30,
@@ -161,63 +100,80 @@ Request body:
 ```
 
 Response body:
+
 ```json
 {
-  "readiness_score": 72,
+  "readiness_score": 78,
   "eligibility_signal": "moderate",
+  "official_takeaways": [
+    "Official ICA guidance frames PR as a holistic assessment supported by complete documents.",
+    "Employment and residency stability appear important to present clearly."
+  ],
+  "community_takeaways": [
+    "Community cases often treat salary stability and time in Singapore as soft signals.",
+    "Forum discussions remain anecdotal and do not reveal formal approval rules."
+  ],
   "top_strengths": [
-    "Stable work history",
-    "Relevant professional background"
+    "Stable employment history in Singapore",
+    "Professional profile with competitive salary"
   ],
   "top_risks": [
-    "Limited family ties in Singapore"
+    "Limited family ties in Singapore",
+    "Holistic PR criteria remain partially opaque"
   ],
   "missing_documents": [
-    "Payslips",
-    "Employer letter"
+    "Latest payslips",
+    "Employer letter",
+    "Educational certificates"
   ],
   "recommended_actions": [
-    "Prepare supporting employment documents"
+    "Prepare a complete employment and education evidence pack",
+    "Strengthen the application narrative around long-term Singapore ties"
   ],
   "confidence_notes": [
-    "Fallback response used due to unavailable external services"
+    "Official guidance is stronger than anecdotal evidence for document expectations.",
+    "Community patterns should be treated as directional only."
   ],
   "data_sources_used": {
-    "official_source": "ICA requirements page",
-    "community_source": "Public applicant discussion thread"
+    "official_source": "ICA PR guidance",
+    "community_source": "Reddit PR discussion threads"
   },
   "error_note": null
 }
 ```
 
-If TinyFish fails, the API continues without retrieval context. If OpenAI fails, the API returns the same response shape with a fallback analysis and a populated `error_note`.
+If TinyFish fails, the API still continues without retrieval context. If OpenAI fails, the backend returns the same response shape with a fallback payload and an `error_note`.
+
+## Local Setup
+
+### Backend
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn app:app --reload
+```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-Frontend expects the backend API at `http://127.0.0.1:8000` and is currently built as a single-page flow:
-- profile form
-- loading progress panel
-- readiness results dashboard
+The frontend targets `http://127.0.0.1:8000` by default.
 
-Optional frontend environment file:
-```bash
-cp .env.example .env
-```
+## Current Status
 
-## Project Status
-Hackathon prototype in progress.
+Hackathon prototype with the product story now aligned around:
+- Singapore PR readiness
+- official ICA guidance as the authoritative source
+- community case patterns as anecdotal support only
 
-## Future Improvements
-- Better source validation
-- More nuanced scoring model
-- Document upload support
-- Personalized application strategy recommendations
-- Historical case comparison dashboard
+## Next Improvements
 
-## Disclaimer
-This project is for informational assistance only and does not constitute legal or immigration advice.
+- Add richer source normalization and citations
+- Support multiple official ICA PR pages and better source labeling
+- Improve structured explanation quality for mixed or incomplete profiles
+- Add historical case clustering instead of relying on raw community threads

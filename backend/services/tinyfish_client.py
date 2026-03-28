@@ -11,9 +11,14 @@ DEFAULT_BASE_URL = os.getenv(
     os.getenv("TINYFISH_API_URL", "https://api.tinyfish.ai"),
 )
 OFFICIAL_ICA_URL = "https://www.ica.gov.sg/reside/PR"
+OFFICIAL_EPR_URL = "https://eservices.ica.gov.sg/esvclandingpage/epr"
 COMMUNITY_FORUM_URL = (
     "https://www.reddit.com/r/askSingapore/comments/1k3m7om/"
     "how_long_does_it_take_to_get_pr_reasons_for/"
+)
+COMMUNITY_FORUM_URL_2 = (
+    "https://www.reddit.com/r/askSingapore/comments/16bdyf5/"
+    "singapore_pr_application/"
 )
 
 
@@ -74,8 +79,8 @@ class TinyFishClient:
 
 
 def get_default_official_urls() -> list[str]:
-    return [OFFICIAL_ICA_URL]
+    return [OFFICIAL_ICA_URL, OFFICIAL_EPR_URL]
 
 
 def get_default_community_urls() -> list[str]:
-    return [COMMUNITY_FORUM_URL]
+    return [COMMUNITY_FORUM_URL, COMMUNITY_FORUM_URL_2]

@@ -37,6 +37,8 @@ class OpenAIAnalysisClient:
             "required_output_schema": {
                 "readiness_score": "integer from 0 to 100",
                 "eligibility_signal": "low | moderate | strong",
+                "official_takeaways": ["string"],
+                "community_takeaways": ["string"],
                 "top_strengths": ["string"],
                 "top_risks": ["string"],
                 "missing_documents": ["string"],
@@ -76,13 +78,15 @@ class OpenAIAnalysisClient:
             {
                 "official_source": (
                     official_context[0].get("title")
+                    or official_context[0].get("url")
                     if official_context and isinstance(official_context[0], dict)
-                    else "ICA requirements page"
+                    else "ICA PR guidance"
                 ),
                 "community_source": (
                     community_context[0].get("title")
+                    or community_context[0].get("url")
                     if community_context and isinstance(community_context[0], dict)
-                    else "Public applicant discussion thread"
+                    else "Reddit PR discussion thread"
                 ),
             },
         )

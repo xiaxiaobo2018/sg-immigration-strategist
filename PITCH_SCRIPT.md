@@ -2,26 +2,26 @@
 
 ## 90-Second Demo Script
 
-Hi, we built SG Immigration Strategist, an AI assistant that helps applicants understand how ready they are for Singapore PR or citizenship before they submit.
+Hi, we built SG Immigration Strategist, an AI agent that helps people assess how ready they are for a Singapore PR application before they submit.
 
-The problem is that the process feels opaque. Official ICA information explains requirements and process, but it does not tell applicants how competitive their profile may look in practice. On the other hand, community discussions are full of useful real-world signals, but they are anecdotal, messy, and hard to interpret.
+The core problem is ambiguity. ICA provides official guidance on process and application requirements, but applicants still struggle to understand how competitive or complete their profile looks. At the same time, Reddit and forum discussions contain real case experiences, but those signals are anecdotal and easy to misread.
 
-Our solution combines both.
+Our product combines both without mixing them up.
 
-On the left, we collect a simple applicant profile: age, nationality, years in Singapore, pass type, profession, salary, education, family ties, and prior rejections. For the demo, I can also load a sample profile with one click.
+On the left, the user enters an applicant profile: age, nationality, years in Singapore, pass type, salary, education, family ties, and prior rejections.
 
-When I click analyze, the system reviews two evidence streams. First, it looks at official ICA guidance. Second, it looks at community-reported case patterns from public discussion threads. We keep those separate on purpose, so official policy stays authoritative and community data is treated as signal, not fact.
+When we click analyze, the backend reviews two evidence streams. First, it retrieves official ICA guidance related to Singapore PR. Second, it retrieves public community discussions that reflect real applicant case patterns.
 
-Then the backend generates a structured readiness assessment: a readiness score, an eligibility signal, top strengths, top risks, missing documents, and recommended actions.
+The key design choice is separation. Official guidance stays authoritative. Community content is treated as anecdotal signal only, never as policy.
 
-What matters is not just the score. The product turns scattered information into a practical strategy snapshot the applicant can act on immediately.
+The output is a structured PR readiness dashboard: a readiness score, an eligibility signal, official takeaways, community pattern signals, top strengths, top risks, likely missing documents, and recommended next steps.
 
-Even for a hackathon demo, we designed it to be reliable. If external services fail, the app still returns a stable structured response so the experience never breaks.
+So instead of dumping scattered information on the user, we turn it into a practical strategy snapshot they can actually act on.
 
-SG Immigration Strategist makes a confusing, high-stakes process more understandable, more transparent, and more actionable.
+We also built it to stay stable in a demo setting. If retrieval or model calls fail, the app still returns a consistent structured response instead of breaking.
 
-Thank you.
+SG Immigration Strategist makes Singapore PR preparation more understandable, more transparent, and more actionable.
 
 ## Shorter Backup Version
 
-SG Immigration Strategist helps users assess Singapore PR or citizenship readiness by combining official ICA guidance with community case patterns. Users fill in a profile, the system separates official evidence from anecdotal discussion, and then returns a clear dashboard with a readiness score, risks, documents to prepare, and recommended next steps. The key value is clarity: we turn scattered information into a practical readiness strategy.
+SG Immigration Strategist is an AI agent for Singapore PR readiness. It combines official ICA guidance with real community case patterns, keeps those evidence streams separate, and returns a clear dashboard with readiness score, risks, document prep signals, and next steps. The value is clarity: users get a practical PR strategy snapshot instead of raw policy pages and scattered anecdotes.

@@ -6,8 +6,8 @@ const LOADING_STAGES = [
   "Analyzing applicant profile...",
   "Reviewing official ICA requirements...",
   "Parsing community case patterns...",
-  "Generating readiness assessment...",
-  "Preparing strategic recommendations...",
+  "Separating official and anecdotal signals...",
+  "Generating PR readiness assessment...",
 ];
 
 const SAMPLE_PROFILE = {
@@ -45,6 +45,8 @@ const EMPTY_FORM = {
 };
 
 const SECTION_CONFIG = [
+  { key: "official_takeaways", title: "Official ICA Takeaways" },
+  { key: "community_takeaways", title: "Community Pattern Signals" },
   { key: "top_strengths", title: "Top Strengths" },
   { key: "top_risks", title: "Top Risks" },
   { key: "missing_documents", title: "Missing Documents" },
@@ -193,11 +195,12 @@ function App() {
   return (
     <main className="app-shell">
       <section className="hero">
-        <p className="eyebrow">Singapore PR & Citizenship Readiness</p>
-        <h1>Turn a raw applicant profile into a clear strategy snapshot.</h1>
+        <p className="eyebrow">Singapore PR Readiness</p>
+        <h1>Assess PR readiness with official ICA guidance and real case patterns.</h1>
         <p className="hero-copy">
-          Capture the essentials, run the analysis, and present a polished
-          readiness report built for a fast live demo.
+          Capture the essentials, separate official rules from anecdotal
+          signals, and turn a raw profile into a practical PR strategy
+          snapshot.
         </p>
       </section>
 
@@ -410,7 +413,7 @@ function App() {
                 <p>Ready to analyze a profile.</p>
                 <p>
                   Load the sample profile for a one-click demo, or enter a real
-                  applicant scenario and run the assessment.
+                  applicant scenario to assess Singapore PR readiness.
                 </p>
               </div>
             )}
@@ -438,8 +441,8 @@ function App() {
                       {formatSignal(result.eligibility_signal)}
                     </span>
                     <p className="signal-copy">
-                      A quick view of how competitive the profile currently
-                      looks.
+                      A quick view of how prepared and competitive the PR
+                      profile currently looks.
                     </p>
                   </div>
                 </div>
@@ -474,14 +477,18 @@ function App() {
                     <strong>Community:</strong>{" "}
                     {result.data_sources_used?.community_source}
                   </p>
+                  <p className="sources-note">
+                    Official ICA guidance remains authoritative. Community
+                    patterns are shown as anecdotal signals only.
+                  </p>
                 </div>
               </div>
             ) : (
               <div className="idle-state">
                 <p>No assessment yet.</p>
                 <p>
-                  Submit the profile form to generate a readiness score, risk
-                  summary, and recommended next steps.
+                  Submit the profile form to generate a PR readiness score,
+                  evidence-aware risk summary, and recommended next steps.
                 </p>
               </div>
             )}
