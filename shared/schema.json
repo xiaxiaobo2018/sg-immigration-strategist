@@ -6,6 +6,7 @@
   "required": [
     "readiness_score",
     "eligibility_signal",
+    "system_status",
     "scoring_breakdown",
     "official_takeaways",
     "community_takeaways",
@@ -26,6 +27,30 @@
     "eligibility_signal": {
       "type": "string",
       "enum": ["low", "moderate", "strong"]
+    },
+    "system_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_mode",
+        "retrieval_mode",
+        "used_fallback_response",
+        "used_live_openai",
+        "used_live_retrieval"
+      ],
+      "properties": {
+        "analysis_mode": {
+          "type": "string",
+          "enum": ["demo_fallback", "openai_only", "retrieval_augmented"]
+        },
+        "retrieval_mode": {
+          "type": "string",
+          "enum": ["unavailable", "openai_only", "retrieval_augmented"]
+        },
+        "used_fallback_response": { "type": "boolean" },
+        "used_live_openai": { "type": "boolean" },
+        "used_live_retrieval": { "type": "boolean" }
+      }
     },
     "scoring_breakdown": {
       "type": "object",

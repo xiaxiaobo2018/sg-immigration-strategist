@@ -194,6 +194,87 @@ Response body:
 
 If TinyFish fails, the API still continues without retrieval context. If OpenAI fails, the backend returns the same response shape with a fallback payload and an `error_note`.
 
+## Install Guide
+
+### Prerequisites
+
+Install the core tools first:
+
+```bash
+python3.11 --version
+node --version
+npm --version
+```
+
+If you do not already have them:
+
+```bash
+brew install python@3.11 node
+```
+
+### Backend Packages
+
+Create local backend config and install the Python packages used by FastAPI, OpenAI, and TinyFish integration:
+
+```bash
+cd backend
+cp .env.example .env
+python3.11 -m pip install -r requirements.txt
+```
+
+This installs:
+- `fastapi`
+- `uvicorn`
+- `pydantic`
+- `openai`
+- `httpx`
+- `python-dotenv`
+
+### Backend Environment
+
+Put your real local keys in `backend/.env`:
+
+```bash
+OPENAI_API_KEY=your_real_key
+TINYFISH_API_KEY=your_real_key
+OPENAI_MODEL=gpt-5
+TINYFISH_BASE_URL=https://api.tinyfish.ai
+```
+
+### Run Backend
+
+Start the API server:
+
+```bash
+cd backend
+python3.11 -m uvicorn app:app --reload
+```
+
+### Frontend Packages
+
+Install the frontend packages used by React and Vite:
+
+```bash
+cd frontend
+cp .env.example .env
+npm install
+```
+
+This installs:
+- `react`
+- `react-dom`
+- `vite`
+- `@vitejs/plugin-react`
+
+### Run Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend targets `http://127.0.0.1:8000` by default.
+
 ## Local Setup
 
 ### Backend
@@ -201,7 +282,6 @@ If TinyFish fails, the API still continues without retrieval context. If OpenAI 
 ```bash
 cd backend
 cp .env.example .env
-pip install -r requirements.txt
 python3.11 -m uvicorn app:app --reload
 ```
 
@@ -215,8 +295,6 @@ cp .env.example .env
 npm install
 npm run dev
 ```
-
-The frontend targets `http://127.0.0.1:8000` by default.
 
 ## Secrets
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 try:
@@ -12,6 +12,7 @@ try:
         TinyFishConfigError,
         get_default_community_urls,
         get_default_official_urls,
+        merge_official_context_items,
     )
 except ImportError:
     from services.openai_client import OpenAIAnalysisClient
@@ -20,6 +21,7 @@ except ImportError:
         TinyFishConfigError,
         get_default_community_urls,
         get_default_official_urls,
+        merge_official_context_items,
     )
 
 
@@ -62,6 +64,7 @@ class AnalyzeResponse(BaseModel):
 
     readiness_score: int
     eligibility_signal: str
+    system_status: dict[str, Any]
     scoring_breakdown: dict[str, Any]
     official_takeaways: list[str]
     community_takeaways: list[str]
@@ -74,9 +77,44 @@ class AnalyzeResponse(BaseModel):
     error_note: str | None = None
 
 
+class PreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    official_urls: list[str] = Field(
+        default_factory=list,
+        description="Optional official source URLs to preview.",
+    )
+    community_urls: list[str] = Field(
+        default_factory=list,
+        description="Optional community source URLs to preview.",
+    )
+    preview_target: str = Field(
+        default="official",
+        pattern="^(official|community)$",
+        description="Which retrieval source to preview in the live browser.",
+    )
+
+
+class PreviewResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run_id: str
+    streaming_url: str
+    url: str
+    source_type: str
+    title: str
+
+
 FALLBACK_RESPONSE = {
     "readiness_score": 72,
     "eligibility_signal": "moderate",
+    "system_status": {
+        "analysis_mode": "demo_fallback",
+        "retrieval_mode": "unavailable",
+        "used_fallback_response": True,
+        "used_live_openai": False,
+        "used_live_retrieval": False,
+    },
     "scoring_breakdown": {
         "rubric_name": "singapore_pr_readiness_v1",
         "preliminary_score": 72,
@@ -518,6 +556,39 @@ def build_scoring_breakdown(
     }
 
 
+def build_system_status(
+    *,
+    used_fallback_response: bool,
+    used_live_openai: bool,
+    official_context: list[dict[str, Any]],
+    community_context: list[dict[str, Any]],
+    retrieval_issue: str | None,
+) -> dict[str, Any]:
+    used_live_retrieval = bool(official_context or community_context)
+
+    if used_fallback_response:
+        analysis_mode = "demo_fallback"
+    elif used_live_retrieval:
+        analysis_mode = "retrieval_augmented"
+    else:
+        analysis_mode = "openai_only"
+
+    if used_live_retrieval:
+        retrieval_mode = "retrieval_augmented"
+    elif retrieval_issue:
+        retrieval_mode = "unavailable"
+    else:
+        retrieval_mode = "openai_only"
+
+    return {
+        "analysis_mode": analysis_mode,
+        "retrieval_mode": retrieval_mode,
+        "used_fallback_response": used_fallback_response,
+        "used_live_openai": used_live_openai,
+        "used_live_retrieval": used_live_retrieval,
+    }
+
+
 def summarize_context_quality(context: list[dict[str, Any]]) -> str:
     if not context:
         return "missing"
@@ -662,9 +733,17 @@ def build_fallback_response(
     source_quality: dict[str, Any],
     official_context: list[dict[str, Any]],
     community_context: list[dict[str, Any]],
+    retrieval_issue: str | None,
     error_note: str,
 ) -> dict[str, Any]:
     response = dict(FALLBACK_RESPONSE)
+    response["system_status"] = build_system_status(
+        used_fallback_response=True,
+        used_live_openai=False,
+        official_context=official_context,
+        community_context=community_context,
+        retrieval_issue=retrieval_issue,
+    )
     response["scoring_breakdown"] = build_scoring_breakdown(
         scoring_rubric,
         FALLBACK_RESPONSE["readiness_score"],
@@ -688,6 +767,45 @@ def build_fallback_response(
     return response
 
 
+def get_preview_config(request: PreviewRequest) -> dict[str, str]:
+    if request.preview_target == "community":
+        url = (request.community_urls or get_default_community_urls())[0]
+        return {
+            "url": url,
+            "source_type": "community",
+            "title": "TinyFish Live Community Preview",
+            "query": "Observe the page and extract the main applicant concerns, anecdotes, and cautionary notes.",
+        }
+
+    url = (request.official_urls or get_default_official_urls())[0]
+    return {
+        "url": url,
+        "source_type": "official",
+        "title": "TinyFish Live Official Preview",
+        "query": "Find the eligibility criteria, required supporting documents, and application method for Singapore PR from this ICA page only.",
+    }
+
+
+@router.post("/preview", response_model=PreviewResponse)
+def start_preview(request: PreviewRequest) -> dict[str, Any]:
+    try:
+        tinyfish_client = TinyFishClient()
+    except TinyFishConfigError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    preview_config = get_preview_config(request)
+    try:
+        preview = tinyfish_client.start_live_preview(
+            url=preview_config["url"],
+            query=preview_config["query"],
+            source_type=preview_config["source_type"],
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    preview["title"] = preview_config["title"]
+    return preview
+
+
 @router.post("", response_model=AnalyzeResponse)
 def analyze(request: AnalyzeRequest) -> dict[str, Any]:
     official_context = []
@@ -702,21 +820,33 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
         retrieval_issue = str(exc)
 
     if tinyfish_client:
+        retrieval_issues: list[str] = []
+
         try:
             official_context = tinyfish_client.collect_context(
-                query="Singapore PR official guidance, requirements, and supporting documents",
+                query="Find the eligibility criteria, required supporting documents, and application method for Singapore PR from this ICA page only.",
                 urls=request.official_urls or get_default_official_urls(),
                 source_type="official",
+                limit=1,
             )
+            official_context = merge_official_context_items(official_context)
+        except Exception as exc:
+            official_context = []
+            retrieval_issues.append(f"official retrieval failed: {exc}")
+
+        try:
             community_context = tinyfish_client.collect_context(
-                query="Singapore PR applicant experiences, approval patterns, and rejection concerns",
+                query="Extract the main Singapore PR applicant concerns, patterns, and cautionary notes.",
                 urls=request.community_urls or get_default_community_urls(),
                 source_type="community",
+                limit=1,
             )
         except Exception as exc:
-            retrieval_issue = f"TinyFish retrieval failed: {exc}"
-            official_context = []
             community_context = []
+            retrieval_issues.append(f"community retrieval failed: {exc}")
+
+        if retrieval_issues:
+            retrieval_issue = f"TinyFish retrieval failed: {' | '.join(retrieval_issues)}"
 
     score_adjustment_guidance = build_score_adjustment_guidance(
         official_context,
@@ -738,6 +868,16 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
             official_context=official_context,
             community_context=community_context,
             extra_notes=request.extra_notes or request.notes,
+        )
+        result.setdefault(
+            "system_status",
+            build_system_status(
+                used_fallback_response=False,
+                used_live_openai=True,
+                official_context=official_context,
+                community_context=community_context,
+                retrieval_issue=retrieval_issue,
+            ),
         )
         result.setdefault(
             "scoring_breakdown",
@@ -772,5 +912,6 @@ def analyze(request: AnalyzeRequest) -> dict[str, Any]:
             source_quality=source_quality,
             official_context=official_context,
             community_context=community_context,
+            retrieval_issue=retrieval_issue,
             error_note=error_note,
         )
